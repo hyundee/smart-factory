@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* scrollbar */
+/* ::-webkit-scrollbar {
+    display: none;
+} */
+
+@layer components {
+	.translate-center {
+		@apply transform;
+		transform: translate(-50%, -50%);
+	}
+	.form-column {
+		@apply flex flex-col gap-5;
+	}
+	.w-400 {
+		width: 400px;
+	}
+}
