@@ -88,7 +88,7 @@ export default function SystemParameters() {
         try {
             const res = await fetch(API_BASE_URL).then((res) => res.json());
             setDataList(
-                res.data.map((data: SystemData) => ({
+                res.map((data: SystemData) => ({
                     id: data.id,
                     checked: false,
                     data: formatData(data),
