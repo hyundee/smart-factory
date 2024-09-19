@@ -5,6 +5,7 @@ import RecoilRootProvider from "../recoilRootProvider";
 import { signIn, useSession } from "next-auth/react";
 // import { useRouter } from "next/navigation";
 import { Navigation } from "@/components/navigation/Navigation";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/header/Header";
 
 export default function BasicLayout({
@@ -12,19 +13,21 @@ export default function BasicLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const { data: session, status } = useSession();
+    const { status } = useSession();
+    const router = useRouter();
 
     useEffect(() => {
+        if (status === "loading") return;
         if (status === "unauthenticated") {
-            signIn(); // 로그인되지 않았으면 로그인 페이지로 리디렉션
+            router.push("/login");
         }
-    }, [status]);
+    }, [status, router]);
 
     if (status === "loading") {
-        return <p>Loading...</p>; // 로딩 중
+        return <p>Loading...</p>;
     }
 
-    console.log(session, status);
+    console.log(status);
 
     // 로그인된 경우
     return (

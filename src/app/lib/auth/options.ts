@@ -1,3 +1,5 @@
+import { firebaseAuth } from "@/firebase/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 // import jwt from "jsonwebtoken";
@@ -8,39 +10,53 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
             credentials: {
                 // 로그인 양식을 정의
-                username: { label: "이메일", type: "text" },
+                email: { label: "이메일", type: "text" },
                 password: { label: "비밀번호", type: "password" },
             },
             async authorize(credentials) {
-                const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/login`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(credentials),
-                    }
-                );
-
-                const user = await res.json();
-                if (res.ok && user) {
-                    return user;
+                if (!credentials?.email || !credentials?.password) {
+                    throw new Error("Email and password are required");
                 }
-                return null;
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(
+                        firebaseAuth,
+                        credentials.email,
+                        credentials.password
+                    );
+                    const user = userCredential.user;
+
+                    if (user) {
+                        // Firebase에서 JWT 토큰 생성
+                        const token = await user.getIdToken();
+                        return { id: user.uid, email: user.email, token };
+                    }
+
+                    return null;
+                } catch (error) {
+                    throw new Error("Invalid email or password");
+                }
             },
         }),
     ],
     session: {
-        strategy: "jwt", // 세션 대신 JWT 사용
+        strategy: "jwt",
     },
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.user = user;
+                token.uid = user.id;
+                token.email = user.email;
+                token.accessToken = user.token;
             }
             return token;
         },
         async session({ session, token }) {
-            session.user = token;
+            session.user = {
+                uid: token.uid,
+                email: token.email,
+                accessToken: token.accessToken,
+            };
             return session;
         },
     },
